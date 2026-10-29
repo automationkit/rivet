@@ -1,7 +1,0 @@
-[service]
-name = "mm-lobby-find-lobby-query-list"
-
-[runtime]
-kind = "rust"
-
-[operation]

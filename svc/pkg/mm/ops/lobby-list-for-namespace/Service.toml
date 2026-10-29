@@ -1,7 +1,0 @@
-[service]
-name = "mm-lobby-list-for-namespace"
-
-[runtime]
-kind = "rust"
-
-[operation]

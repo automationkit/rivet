@@ -1,0 +1,115 @@
+{
+	"docs": [
+		{
+			"title": "General",
+			"pages": [
+				{
+					"title": "Overview",
+					"href": "/docs/",
+					"icon": "faSquareInfo"
+				},
+				{
+					"title": "Architecture",
+					"href": "/docs/architecture"
+				}
+			]
+		},
+		{
+			"title": "Connect",
+			"pages": [
+				{
+					"title": "Connect",
+					"href": "/docs/connect"
+				},
+				{
+					"title": "Authentication",
+					"collapsible": true,
+					"pages": [
+						{
+							"title": "Overview",
+							"href": "/docs/authentication"
+						},
+						{
+							"title": "Scoped Tokens",
+							"href": "/docs/jwt"
+						}
+					]
+				}
+			]
+		},
+		{
+			"title": "Operate",
+			"pages": [
+				{
+					"title": "Namespaces",
+					"href": "/docs/namespaces"
+				},
+				{
+					"title": "Nodes & Node Pools",
+					"href": "/docs/nodes"
+				},
+				{
+					"title": "Versions & Upgrades",
+					"href": "/docs/versions"
+				},
+				{
+					"title": "Monitoring",
+					"collapsible": true,
+					"pages": [
+						{
+							"title": "OpenTelemetry",
+							"href": "/docs/tracing"
+						},
+						{
+							"title": "Management API",
+							"href": "/docs/debugging"
+						}
+					]
+				}
+			]
+		},
+		{
+			"title": "Reference",
+			"pages": [
+				{
+					"title": "Environment Variables",
+					"href": "/docs/environment-variables"
+				},
+				{
+					"title": "CLI",
+					"href": "/docs/cli"
+				},
+				{
+					"title": "API Specs",
+					"collapsible": true,
+					"pages": [
+						{
+							"title": "HTTP API",
+							"href": "/docs/api"
+						},
+						{
+							"title": "OpenAPI",
+							"href": "https://github.com/rivet-dev/rivet/tree/main/rivetkit-openapi",
+							"external": true
+						},
+						{
+							"title": "AsyncAPI",
+							"href": "https://github.com/rivet-dev/rivet/tree/main/rivetkit-asyncapi",
+							"external": true
+						}
+					]
+				},
+				{
+					"title": "Advanced",
+					"collapsible": true,
+					"pages": [
+						{
+							"title": "Benchmarking",
+							"href": "/docs/benchmarking"
+						}
+					]
+				}
+			]
+		}
+	]
+}

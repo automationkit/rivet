@@ -1,7 +1,0 @@
-[service]
-name = "team-recommend"
-
-[runtime]
-kind = "rust"
-
-[operation]

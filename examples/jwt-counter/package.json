@@ -1,0 +1,32 @@
+{
+	"name": "jwt-counter-example",
+	"version": "1.0.0",
+	"private": true,
+	"license": "MIT",
+	"type": "module",
+	"scripts": {
+		"start": "srvx dist/server.js",
+		"client": "tsx scripts/client.ts",
+		"smoke": "tsx tests/smoke.test.ts",
+		"check-types": "tsc --noEmit",
+		"dev": "vite",
+		"build": "vite build && vite build --mode server"
+	},
+	"dependencies": {
+		"hono": "^4.12.25",
+		"react": "19.1.0",
+		"react-dom": "19.1.0",
+		"rivetkit": "workspace:*",
+		"srvx": "^0.10.0"
+	},
+	"devDependencies": {
+		"@types/node": "^22.13.9",
+		"@types/react": "^19.2.13",
+		"@types/react-dom": "^19.2.3",
+		"@vitejs/plugin-react": "^4.2.0",
+		"tsx": "^4.20.0",
+		"typescript": "^5.5.2",
+		"vite": "^5.0.0",
+		"vite-plugin-srvx": "^1.0.2"
+	}
+}

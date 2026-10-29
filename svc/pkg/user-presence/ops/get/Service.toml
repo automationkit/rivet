@@ -1,7 +1,0 @@
-[service]
-name = "user-presence-get"
-
-[runtime]
-kind = "rust"
-
-[operation]

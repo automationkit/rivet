@@ -1,0 +1,40 @@
+---
+title: "Environment Variables"
+description: "Configure RivetKit runtime behavior with environment variables for the inspector, storage, and logging."
+skill: true
+---
+
+These variables configure the RivetKit SDK inside your own process. Variables that
+connect your node to a Rivet control plane, select a node pool, or configure the
+local control plane live in [Environment Variables](/docs/environment-variables) in the
+platform docs.
+
+## Inspector
+
+| Environment Variable | Description |
+|---------------------|-------------|
+| `RIVET_INSPECTOR_DISABLE` | Set to `1` to disable the inspector |
+
+## Experimental
+
+| Environment Variable | Description |
+|---------------------|-------------|
+| `RIVET_EXPERIMENTAL_OTEL` | Set to `1` to enable experimental OTel tracing in Rivet Actors |
+
+## Storage
+
+| Environment Variable | Description |
+|---------------------|-------------|
+| `RIVETKIT_RUNTIME` | Runtime binding to use for RivetKit core: `auto`, `native`, or `wasm`. Defaults to `auto`. |
+| `RIVETKIT_STORAGE_PATH` | Where the local development control plane keeps Rivet Actor data, in a `.rivetkit` folder inside this directory. Defaults to your home directory. |
+
+## Logging
+
+| Environment Variable | Description |
+|---------------------|-------------|
+| `RIVET_LOG_LEVEL` | Log level: `trace`, `debug`, `info`, `warn`, `error`, `fatal`, `silent` |
+| `RIVET_LOG_TARGET` | Set to `1` to include log target |
+| `RIVET_LOG_TIMESTAMP` | Set to `1` to include timestamps |
+| `RIVET_LOG_MESSAGE` | Set to `1` to include message formatting |
+| `RIVET_LOG_ERROR_STACK` | Set to `1` to include error stack traces |
+| `RIVET_LOG_HEADERS` | Set to `1` to log request headers |

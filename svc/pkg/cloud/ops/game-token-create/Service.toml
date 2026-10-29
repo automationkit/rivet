@@ -1,7 +1,0 @@
-[service]
-name = "cloud-game-token-create"
-
-[runtime]
-kind = "rust"
-
-[operation]

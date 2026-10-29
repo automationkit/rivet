@@ -1,7 +1,0 @@
-[service]
-name = "email-verification-create"
-
-[runtime]
-kind = "rust"
-
-[operation]

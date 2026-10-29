@@ -1,7 +1,0 @@
-[service]
-name = "mm-config-version-get"
-
-[runtime]
-kind = "rust"
-
-[operation]

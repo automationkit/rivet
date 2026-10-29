@@ -1,7 +1,0 @@
-[service]
-name = "token-exchange"
-
-[runtime]
-kind = "rust"
-
-[operation]

@@ -1,7 +1,0 @@
-[service]
-name = "cdn-namespace-auth-user-remove"
-
-[runtime]
-kind = "rust"
-
-[operation]

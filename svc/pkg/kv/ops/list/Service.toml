@@ -1,7 +1,0 @@
-[service]
-name = "kv-list"
-
-[runtime]
-kind = "rust"
-
-[operation]

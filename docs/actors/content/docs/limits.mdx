@@ -1,0 +1,135 @@
+---
+title: "Limits"
+seoTitle: "Rivet Actors Limits and Constraints"
+description: "Review Rivet Actors limits for state, messages, connections, execution, and storage so applications stay within supported bounds."
+skill: true
+---
+
+This page documents the limits for Rivet Actors.
+
+There are two types of limits:
+
+- **Soft Limit**: Application-level limit, configurable in RivetKit. These cannot exceed the hard limit.
+- **Hard Limit**: Infrastructure-level limit that cannot be configured.
+
+Soft limits are configured in two places. Registry-level WebSocket message-size limits are passed to `setup`:
+
+<CodeSnippet file="examples/docs/actors-limits/registry-message-size.ts" />
+
+Per-actor limits such as queue sizes and lifecycle timeouts are passed to `actor(...)` via `options`:
+
+<CodeSnippet file="examples/docs/actors-limits/actor-options.ts" />
+
+## Limits
+
+### WebSocket
+
+These limits affect actions that use `.connect()` and [low-level WebSockets](/actors/docs/websocket-handler).
+
+| Name | Soft Limit | Hard Limit | Description |
+|------|------------|------------|-------------|
+| Max incoming message size | 64 KiB | 16 MiB | Maximum size of incoming WebSocket messages. Soft limit configurable via `maxIncomingMessageSize`. |
+| Max outgoing message size | 1 MiB | 16 MiB | Maximum size of outgoing WebSocket messages. Soft limit configurable via `maxOutgoingMessageSize`. |
+| WebSocket open timeout | N/A | 15 seconds | Time allowed to authorize the connection and reach the actor. |
+
+WebSocket connections close when the actor sleeps. Clients reconnect, which wakes the actor.
+
+### HTTP
+
+These limits affect actions that do not use `.connect()` and [low-level HTTP requests](/actors/docs/request-handler).
+
+| Name | Soft Limit | Hard Limit | Description |
+|------|------------|------------|-------------|
+| Actor start wait | N/A | 45 seconds | Maximum time a request waits for its actor to start before it fails. |
+| Max buffered response body size | N/A | 16 MiB | Maximum size of a non-streaming HTTP response. Streaming responses are flow controlled and may transfer more over their lifetime. |
+| Response start timeout | 60 seconds | N/A | Maximum time for `onRequest` to return response headers. Uses `actionTimeout`. It does not limit a response stream after the headers arrive. |
+| Streaming response idle timeout | N/A | None | Rivet does not close an otherwise healthy stream because no body chunk was produced. Other proxies and hosting platforms may impose their own idle timeouts, so SSE handlers should send periodic comment heartbeats. |
+
+Request bodies are streamed to the actor and have no fixed size limit.
+
+### Queue
+
+| Name | Soft Limit | Hard Limit | Description |
+|------|------------|------------|-------------|
+| Max queue size | 1,000 messages | N/A | Maximum number of messages in the queue before new messages are rejected. Configurable via `maxQueueSize`. |
+| Max queue message size | 64 KiB | N/A | Maximum size of each individual queue message. Configurable via `maxQueueMessageSize`. |
+
+### Schedule
+
+| Name | Soft Limit | Hard Limit | Description |
+|------|------------|------------|-------------|
+| Max scheduled events | 1,000 | N/A | Maximum number of pending scheduled events per actor. Configurable via `maxSchedules`. |
+
+### Actor Storage
+
+Each Rivet Actor has one durable volume. Its [SQLite database](/actors/docs/sqlite) and its [KV](/actors/docs/kv) data live in that volume.
+
+### Actor KV Storage
+
+These limits apply to the [KV API](/actors/docs/kv).
+
+| Name | Soft Limit | Hard Limit | Description |
+|------|------------|------------|-------------|
+| Max key size | N/A | 2 KiB | Maximum size of a single key. |
+| Max value size | N/A | 128 KiB | Maximum size of a single value. |
+
+A large batch put is split into several transactions, so it is not atomic. Keep entries that must change together in one small batch.
+
+### Actor SQLite Storage
+
+These limits apply to the [SQLite database](/actors/docs/sqlite).
+
+| Name | Soft Limit | Hard Limit | Description |
+|------|------------|------------|-------------|
+| Max pages changed per transaction | N/A | 32,768 pages (128 MiB) | Maximum SQLite pages one transaction can change, at 4 KiB per page. A larger transaction fails with `sqlite.transaction_too_large` and is rolled back; the database stays usable. |
+| Transaction deadline | 60 seconds | N/A | Safety backstop for `db.transaction()`. Configure per transaction with `{ timeout: milliseconds }`; there is no product-level maximum. |
+| Transaction coordinator queue | N/A | 128 operations | Maximum admitted SQLite operations waiting behind an active coordinated transaction. Additional operations fail with `sqlite.transaction_queue_full`. |
+| Max database size (remote SQL) | N/A | 256 MiB (65,536 pages) | Applies when queries run on the control plane: always on the WebAssembly runtime, and on native runtimes with `sqlite.backend` set to `"remote"`. |
+| Max value and result size (remote SQL) | N/A | 24 MiB | Maximum size of one value and of one statement's result when queries run on the control plane. |
+
+Large commits are sent in internal chunks, but each transaction is published atomically. The limit counts raw pages changed, before compression.
+
+If a transaction fails with `sqlite.transaction_too_large`, split the work into smaller transactions, for example by inserting, updating, or deleting rows in batches. `VACUUM` rewrites the whole database in one transaction, so it runs only while the database's in-use pages fit under this limit; it is refused up front on larger databases. Building an index on a large table can also exceed the limit.
+
+### Actor Runtime Socket
+
+The Beta [Actor Runtime Socket](/actors/docs/actor-runtime-socket) negotiates its active frame limit during the handshake.
+
+| Name | Soft Limit | Hard Limit | Description |
+|------|------------|------------|-------------|
+| Frame payload size | 32 MiB | N/A | Default maximum request or response payload. Self-hosted native runtimes can configure `RIVET_ACTOR_RUNTIME_SOCKET_MAX_FRAME_BYTES`; oversized responses return `ResponseTooLarge`. |
+
+### Names and Keys
+
+| Name | Soft Limit | Hard Limit | Description |
+|------|------------|------------|-------------|
+| Max actor key total size | N/A | 1,024 bytes | Maximum total size of the serialized actor key. |
+| Max actor name length | N/A | 64 bytes | Maximum length of an actor name. |
+| Max namespace and pool name length | N/A | 63 bytes | Maximum length of a namespace slug or node pool name. |
+
+### Timeouts
+
+| Name | Soft Limit | Hard Limit | Description |
+|------|------------|------------|-------------|
+| Action timeout | 60 seconds | N/A | Timeout for RPC actions and for raw `onRequest` handlers to return response headers. Configurable via `actionTimeout`. |
+| On before connect timeout | 5 seconds | N/A | Timeout for the `onBeforeConnect` hook. Configurable via `onBeforeConnectTimeout`. |
+| Create vars timeout | 5 seconds | N/A | Timeout for `createVars` hook. Configurable via `createVarsTimeout`. |
+| Create conn state timeout | 5 seconds | N/A | Timeout for `createConnState` hook. Configurable via `createConnStateTimeout`. |
+| On connect timeout | 5 seconds | N/A | Timeout for `onConnect` hook. Configurable via `onConnectTimeout`. |
+| On migrate timeout | 30 seconds | N/A | Timeout for `onMigrate` hook. Configurable via `onMigrateTimeout`. |
+| Sleep grace period | 15 seconds | N/A | Total graceful shutdown budget for both sleep and destroy. Covers `onSleep`/`onDestroy`, run handler shutdown, `waitUntil`, `keepAwake`, async raw WebSocket handlers, and connection cleanup. Configurable via `sleepGracePeriod`. |
+| Sleep timeout | 30 seconds | N/A | Time of inactivity before actor hibernates. Configurable via `sleepTimeout`. |
+| State save interval | 1 second | N/A | Interval between automatic state saves. Configurable via `stateSaveInterval`. |
+| Connection liveness timeout | 2.5 seconds | N/A | Time a stateful connection can miss liveness checks before RivetKit treats it as unhealthy. Configurable via `connectionLivenessTimeout`. |
+| Connection liveness interval | 5 seconds | N/A | Interval between stateful connection liveness checks. Configurable via `connectionLivenessInterval`. |
+
+### Actor Lifecycle
+
+| Name | Soft Limit | Hard Limit | Description |
+|------|------------|------------|-------------|
+| Actor start threshold | N/A | 15 seconds | Maximum time for an actor to start. A start that takes longer is stopped. |
+| Node lost threshold | N/A | 40 seconds | Time after a node's connection drops before its actors are rescheduled on other nodes. |
+
+## Increasing Limits
+
+These limits are sane defaults designed to protect your application from exploits and accidental runaway bugs. If you have a use case that requires different limits, [contact us](/talk-to-an-engineer/) to discuss your requirements.

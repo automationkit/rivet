@@ -1,7 +1,0 @@
-[service]
-name = "user-notification-auth-register"
-
-[runtime]
-kind = "rust"
-
-[operation]

@@ -1,0 +1,106 @@
+---
+title: "Debugging"
+description: "Inspect and manage Rivet Actors on a Rivet control plane with its HTTP API."
+skill: true
+---
+
+## Connecting to Rivet
+
+Every endpoint in this guide works locally and in production. Extract the shell variables below from your `RIVET_ENDPOINT` (`https://<namespace>:<token>@<host>`):
+
+```bash
+# From RIVET_ENDPOINT=https://my-namespace:<rivet-token>@rivet.example.com
+export RIVET_API="https://rivet.example.com"
+export RIVET_NAMESPACE="my-namespace"
+export RIVET_TOKEN="<rivet-token>"
+
+# Local development uses the local control plane and the token `default`:
+# export RIVET_API="http://localhost:6420" RIVET_NAMESPACE="default" RIVET_TOKEN="default"
+```
+
+Send the token as a bearer token on every request except `GET /metadata`. Use a token authorized for the selected namespace. On a self-hosted control plane, your Rivet token works in every namespace. See [Namespaces](/docs/namespaces).
+
+## Rivet Actors
+
+### List Rivet Actors
+
+```bash
+# All Rivet Actors with a given name
+curl "$RIVET_API/actors?name=my-actor&namespace=$RIVET_NAMESPACE" \
+  -H "Authorization: Bearer $RIVET_TOKEN"
+
+# One Rivet Actor by key (key requires name)
+curl "$RIVET_API/actors?name=my-actor&key=my-key&namespace=$RIVET_NAMESPACE" \
+  -H "Authorization: Bearer $RIVET_TOKEN"
+
+# Rivet Actors by ID (comma-separated)
+curl "$RIVET_API/actors?actor_ids=id1,id2&namespace=$RIVET_NAMESPACE" \
+  -H "Authorization: Bearer $RIVET_TOKEN"
+```
+
+When `actor_ids` is set, `name` and `key` are ignored.
+
+```json
+{
+  "actors": [
+    {
+      "actor_id": "abc123",
+      "name": "my-actor",
+      "key": "my-key",
+      "namespace": "default",
+      "create_ts": 1706000000000
+    }
+  ],
+  "pagination": { "cursor": null }
+}
+```
+
+Keys in HTTP requests separate components with `/`, escaping `/` and `\` inside a component with a backslash. An empty component is `\0`. For example, the key `["chat", "42"]` is `chat/42`. Use `curl --get --data-urlencode` for keys containing special characters. The single-component key `my-key` needs no escaping.
+
+### Create a Rivet Actor
+
+`POST /actors` creates a Rivet Actor. `PUT /actors` creates it if it does not exist and returns the existing one otherwise.
+
+```bash
+curl -X PUT "$RIVET_API/actors?namespace=$RIVET_NAMESPACE" \
+  -H "Authorization: Bearer $RIVET_TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{ "name": "my-actor", "key": "my-key" }'
+```
+
+The Rivet Actor runs in the `default` [node pool](/docs/nodes).
+
+### Sleep or destroy a Rivet Actor
+
+```bash
+curl -X POST "$RIVET_API/actors/{actor_id}/sleep?namespace=$RIVET_NAMESPACE" \
+  -H "Authorization: Bearer $RIVET_TOKEN"
+
+curl -X DELETE "$RIVET_API/actors/{actor_id}?namespace=$RIVET_NAMESPACE" \
+  -H "Authorization: Bearer $RIVET_TOKEN"
+```
+
+### List Rivet Actor names
+
+```bash
+curl "$RIVET_API/actors/names?namespace=$RIVET_NAMESPACE" \
+  -H "Authorization: Bearer $RIVET_TOKEN"
+```
+
+## Nodes
+
+```bash
+# Connected nodes in the default pool
+curl "$RIVET_API/pools/default/nodes?namespace=$RIVET_NAMESPACE" \
+  -H "Authorization: Bearer $RIVET_TOKEN"
+
+# Configured node pools
+curl "$RIVET_API/pools?namespace=$RIVET_NAMESPACE" \
+  -H "Authorization: Bearer $RIVET_TOKEN"
+```
+
+Pool configuration persists even when no nodes are connected. See [Nodes & Node Pools](/docs/nodes#read-pools-and-nodes).
+
+## API reference
+
+Every control plane endpoint, with its parameters and responses, is listed in the [HTTP API reference](/docs/api).

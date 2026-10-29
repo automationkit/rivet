@@ -1,0 +1,26 @@
+{
+	"compilerOptions": {
+		"target": "ESNext",
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"lib": [
+			"ESNext",
+			"DOM"
+		],
+		"types": [
+			"node"
+		],
+		"strict": true,
+		"skipLibCheck": true,
+		"noEmit": true,
+		"allowImportingTsExtensions": true,
+		"jsx": "react-jsx"
+	},
+	"include": [
+		"src/**/*.ts",
+		"scripts/**/*.ts",
+		"tests/**/*.ts",
+		"frontend/**/*",
+		"vite.config.ts"
+	]
+}

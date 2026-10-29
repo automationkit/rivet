@@ -1,8 +1,0 @@
-[service]
-name = "team-dev-worker"
-
-[runtime]
-kind = "rust"
-
-[consumer]
-

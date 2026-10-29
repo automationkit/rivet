@@ -1,7 +1,0 @@
-[service]
-name = "game-create"
-
-[runtime]
-kind = "rust"
-
-[operation]

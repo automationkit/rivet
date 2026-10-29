@@ -1,0 +1,66 @@
+---
+title: "Namespaces"
+description: "Separate production, staging, or tenants with namespace slugs."
+skill: true
+---
+
+A namespace separates Actors, Actor keys, and node pools on one control plane. Each namespace has a unique slug, such as `production` or `staging`. Use that slug in endpoints and API requests.
+
+## Quickstart
+
+<Steps>
+<Step title="Create a namespace">
+
+Use your Rivet token, the `auth.admin_token` value from your control plane config:
+
+```bash
+curl -X POST "$RIVET_API/namespaces" \
+  -H "Authorization: Bearer $RIVET_TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"staging"}'
+```
+
+```json
+{"namespace":{"name":"staging","create_ts":1790000000000}}
+```
+
+</Step>
+<Step title="Configure a node pool">
+
+Create a pool in the namespace before connecting nodes:
+
+```bash
+curl -X PUT "$RIVET_API/pools/default?namespace=staging" \
+  -H "Authorization: Bearer $RIVET_TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"metadata":{"environment":"staging"}}'
+```
+
+See [Nodes & Node Pools](/docs/nodes) for pool settings.
+
+</Step>
+<Step title="Connect your app">
+
+Set the namespace slug in the node's private endpoint and start the registry with `registry.start()`:
+
+```bash
+RIVET_ENDPOINT=https://staging:<rivet-token>@rivet.mycompany.com
+```
+
+</Step>
+</Steps>
+
+## List namespaces
+
+```bash
+curl "$RIVET_API/namespaces?limit=100" \
+  -H "Authorization: Bearer $RIVET_TOKEN"
+```
+
+The response contains `namespaces` and `pagination.cursor`. Pass the cursor as `cursor` on the next request. Filter a single namespace with `?name=staging`.
+
+## Choose a namespace
+
+An endpoint can include the slug, as above, or you can set `RIVET_NAMESPACE=staging` separately. Management API requests use `?namespace=staging`.
+
+The `default` namespace is provided for local development. On a shared control plane, create a namespace for each environment before connecting nodes or creating Actors.

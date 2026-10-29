@@ -1,7 +1,0 @@
-[service]
-name = "mm-config-namespace-get"
-
-[runtime]
-kind = "rust"
-
-[operation]

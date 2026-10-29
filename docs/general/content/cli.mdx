@@ -1,0 +1,120 @@
+---
+title: "CLI"
+description: "Use the optional Rivet CLI to deploy to a Rivet Cloud cluster, read its logs, and call the Rivet Cloud API."
+skill: true
+---
+
+The `rivet` CLI (`@rivetkit/cli`) is optional. It deploys your app to a [Rivet Cloud](/docs/deploy/cloud/) cluster. Run it with your package manager:
+
+```bash
+npx @rivetkit/cli <command>
+```
+
+| Command | Description |
+| --- | --- |
+| `rivet login` | Sign in to Rivet Cloud in the browser. |
+| `rivet link` | Link the current directory to a cluster. |
+| `rivet deploy` | Build and deploy your app to a cluster. |
+| `rivet cluster logs` | Read or follow a cluster's logs. |
+| `rivet api` | Make an authenticated request to the Rivet Cloud API. |
+
+## Signing in and linking
+
+`rivet login` opens a browser to sign in and stores the session in `~/.rivet/credentials`, refreshing it as needed. Pass `--no-browser` to print the sign-in URL instead. `rivet logout` removes the session and `rivet whoami` shows the signed-in account and linked cluster.
+
+```bash
+rivet login
+rivet link --org my-org --cluster my-cluster
+```
+
+`rivet link` writes `.rivet/project.json` in the current directory, so later commands there default to that cluster. It prompts for anything not passed as a flag. `rivet unlink` removes the link.
+
+Every command resolves its token in this order: `--token`, `RIVET_CLOUD_TOKEN`, then the `rivet login` session. Use `--token` or `RIVET_CLOUD_TOKEN` in CI. `--cluster` (or `RIVET_CLUSTER`) selects the cluster, with `--org` (or `RIVET_ORG`) naming the organization it belongs to. `--cloud-api` points at a different Cloud API endpoint.
+
+## `rivet deploy`
+
+The CLI builds the image, uploads it as a build, rolls the pool out to that build, and prints the build ID.
+
+```bash
+rivet deploy --cluster my-cluster --org my-org
+```
+
+To avoid passing `--cluster` every time, link the directory once with `rivet link --cluster my-cluster` or set `RIVET_CLUSTER`.
+
+Roll back by deploying an earlier build ID. This skips the Docker build and upload.
+
+```bash
+rivet deploy --cluster my-cluster --build <build-id>
+```
+
+| Flag | Default | Description |
+| --- | --- | --- |
+| `--cluster` | `RIVET_CLUSTER` / linked cluster | Cluster to deploy to. |
+| `--org` | `RIVET_ORG` / linked organization | Organization the cluster belongs to. |
+| `--region` | the cluster's only region | Region of the pool. Required when the cluster has several regions. |
+| `--pool` | `default` | Pool to roll out. |
+| `--build` | new build | Roll out an existing build instead of building a new one. |
+| `--dockerfile` | `Dockerfile` | Dockerfile to build. |
+| `--build-context` | `.` | Docker build context. |
+| `--image` | cluster name | Image name recorded on the build. |
+| `--tag` | git short SHA | Image tag recorded on the build. |
+
+The saved image must be 5 GiB or smaller. See [Actor Nodes](/docs/deploy/cloud/compute) for what the image needs.
+
+## `rivet cluster logs`
+
+Prints a cluster's most recent control plane and node logs, oldest first. `-f` keeps following new lines. `--source engine` selects control plane logs and `--source runner` selects node logs.
+
+```bash
+rivet cluster logs --cluster my-cluster
+rivet cluster logs --cluster my-cluster --severity error -n 50
+rivet cluster logs --cluster my-cluster --source runner --pool default --contains timeout -f
+```
+
+Each line shows its timestamp, severity, source, and message. This format is not stable; pass `--json` to print one JSON object per line with `id`, `timestamp`, `severity`, `message`, `source`, `runner_pool`, and `instance_id`.
+
+| Flag | Default | Description |
+| --- | --- | --- |
+| `--cluster` | `RIVET_CLUSTER` / linked cluster | Cluster to read. Required. |
+| `--source` | both | `engine` for the control plane or `runner` for nodes. |
+| `--pool` | all pools | Only this node pool's logs. Cannot be combined with `--source engine`. |
+| `--severity` | all | Only lines at this severity or above: `trace`, `debug`, `info`, `warn`, `error`, or `fatal`. |
+| `--contains` | none | Only lines containing this text, case-insensitive. |
+| `-n`, `--limit` | `100` | Number of recent lines to print first, up to 1000. |
+| `-f`, `--follow` | none | Keep printing new lines as they arrive. |
+| `--before` | none | Page back: only lines older than this line `id` from `--json` output. |
+| `--json` | none | Emit JSON lines instead of formatted output. |
+| `--token`, `--org`, `--cloud-api` | none | Same as `rivet deploy`. |
+
+Lines can arrive up to a minute late, and `--follow` prints them when they do.
+
+## `rivet api`
+
+Sends a request to any Rivet Cloud API endpoint with your credentials and prints the response body. Use it for endpoints the CLI has no command for.
+
+```bash
+rivet api /v2/clusters
+rivet api '/v2/clusters/{cluster}/builds'
+rivet api '/v2/clusters/{cluster}/builds/<build-id>' -X DELETE
+```
+
+The path is sent as written. `rivet api /v2/openapi.json` lists every endpoint. `{cluster}` and `{org}` are filled from the matching flag or the linked directory.
+
+Fields become a JSON body, and the method defaults to `POST` when a body is given. With `-X GET`, fields are sent as query parameters.
+
+```bash
+rivet api '/v2/clusters/{cluster}/regions/us-east4/runner-pools/default' -X PUT \
+  -f build_id=<build-id> -f 'cidr_allowlist[]'
+```
+
+| Flag | Description |
+| --- | --- |
+| `-X`, `--method` | HTTP method. Defaults to `GET`, or `POST` with a body. |
+| `-f`, `--raw-field key=value` | String field, repeatable. `key[]=value` appends to an array and a bare `key[]` sends an empty array. |
+| `-F`, `--field key=value` | Typed field, repeatable. `true`, `false`, `null`, and numbers become JSON values. `@file` reads the value from a file. |
+| `--input <file>` | JSON file to send as the body, or `-` for stdin. |
+| `-H`, `--header 'Name: value'` | Extra request header, repeatable. |
+| `-i`, `--include` | Print the response status and headers before the body. |
+| `--token`, `--cloud-api` | Same as `rivet deploy`. |
+
+The command exits with a non-zero status when the API responds with an error, after printing the response body.

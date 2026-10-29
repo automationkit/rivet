@@ -1,7 +1,0 @@
-[service]
-name = "cdn-site-create"
-
-[runtime]
-kind = "rust"
-
-[operation]

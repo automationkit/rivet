@@ -1,9 +1,0 @@
-[service]
-name = "team-dev-halt-collect"
-regions = ["lnd-atl"]
-
-[runtime]
-kind = "rust"
-
-[periodic]
-cron = "0 0 * * *"

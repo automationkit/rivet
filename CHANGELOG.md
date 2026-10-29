@@ -1,43 +1,80 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+## Unreleased
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+- Engine now requires an admin token for self-hosted deployments. Set `auth.admin_token` and
+  send it as a Bearer token. To restore legacy unauthenticated access behavior for actor
+  management and routing, also set `auth.insecure_allow_unauthenticated: true`. The admin token
+  remains required, and token issuance stays authenticated.
 
-## [Unreleased]
+- The Rust SDK now supports actor action sets containing up to 128 action types, increased from 16. TypeScript actor definitions remain unrestricted.
 
-### Added
+- `rivetkit` no longer exposes `ctx.sql` on actor contexts. Migrate raw SQLite calls to `ctx.db` from `rivetkit/db`, and keep Drizzle setup on the `rivetkit/db/drizzle` subpath.
 
--   **Infra** Support configuring multiple S3 providers
--   **Infra** Support multipart uploads
--   **Infra** Replace Promtail-based log shipping with native Loki Docker driver
--   **Infra** Add local Traefik Cloudflare proxy daemon for connecting to Cloudflare Access services
--   **Bolt** Support for connecting to Redis databases with `bolt redis sh`
--   **Bolt** Add confirmation before running any command in the production namespace
+  Migration example:
 
-### Changed
+  ```ts
+  import { db } from "rivetkit/db";
 
--   **Infra** Update CNI plugins to 1.3.0
--   **Infra** Update ClickHouse to 23.7.2.25
--   **Infra** Update Cockroach to 23.1.7
--   **Infra** Update Consul Exporter to 1.9.0
--   **Infra** Update Consul to 1.16.0
--   **Infra** Update Imagor to 1.4.7
--   **Infra** Update NATS server to 2.9.20
--   **Infra** Update Node Exporter server to 1.6.1
--   **Infra** Update Nomad to 1.6.1
--   **Infra** Update Prometheus server to 2.46.0
--   **Infra** Update Redis Exporter to 1.52.0
--   **Infra** Update Redis to 7.0.12
--   **Infra** Update Treafik to 2.10.4
+  const myActor = actor({
+    db: db(),
+    actions: {
+      listTodos: async (ctx) => {
+        return await ctx.db.execute("SELECT * FROM todos ORDER BY created_at DESC");
+      },
+    },
+  });
+  ```
 
-### Security
+- `rivetkit` no longer exports the old concrete typed error classes from `rivetkit/actor/errors` such as `QueueFull`, `ActorNotFound`, and `ActionTimedOut`. The native runtime now standardizes on `RivetError` plus `group` and `code` so the same error shape survives HTTP, WebSocket, and bridge boundaries instead of depending on `instanceof` across runtimes.
 
--   Resolve [RUSTSEC-2023-0044](https://rustsec.org/advisories/RUSTSEC-2023-0044)
+  Migration example:
 
-### Fixed
+  ```ts
+  try {
+    await actor.someAction();
+  } catch (e) {
+    if (e instanceof QueueFull) {
+      // old path
+    }
 
--   **Portal** Skip captcha if no Turnstile key provided
--   **Infra** Resolve [RUSTSEC-2023-0044](https://rustsec.org/advisories/RUSTSEC-2023-0044)
--   **Bolt** Correctly resolve project root when building services natively
+    if (isRivetErrorCode(e, "queue", "full")) {
+      // new path
+    }
+  }
+  ```
+
+  Common replacements:
+
+  | Removed class                     | Use now                                           |
+  | --------------------------------- | ------------------------------------------------- |
+  | `QueueFull`                       | `isRivetErrorCode(e, "queue", "full")`            |
+  | `QueueMessageTooLarge`            | `isRivetErrorCode(e, "queue", "message_too_large")` |
+  | `QueueMessageInvalid`             | `isRivetErrorCode(e, "queue", "message_invalid")` |
+  | `QueuePayloadInvalid`             | `isRivetErrorCode(e, "queue", "invalid_payload")` |
+  | `QueueCompletionPayloadInvalid`   | `isRivetErrorCode(e, "queue", "invalid_completion_payload")` |
+  | `QueueAlreadyCompleted`           | `isRivetErrorCode(e, "queue", "already_completed")` |
+  | `ActionTimedOut`                  | `isRivetErrorCode(e, "action", "timed_out")`      |
+  | `ActionNotFound`                  | `isRivetErrorCode(e, "action", "not_found")`      |
+  | `ActorNotFound`                   | `isRivetErrorCode(e, "actor", "not_found")`       |
+  | `ActorStopping`                   | `isRivetErrorCode(e, "actor", "stopping")`        |
+  | `ActorAborted`                    | `isRivetErrorCode(e, "actor", "aborted")`         |
+  | `IncomingMessageTooLong`          | `isRivetErrorCode(e, "message", "incoming_too_long")` |
+  | `OutgoingMessageTooLong`          | `isRivetErrorCode(e, "message", "outgoing_too_long")` |
+  | `InvalidEncoding`                 | `isRivetErrorCode(e, "encoding", "invalid")`      |
+  | `InvalidRequest`                  | `isRivetErrorCode(e, "request", "invalid")`       |
+  | `InvalidQueryJSON`                | `isRivetErrorCode(e, "request", "invalid_query_json")` |
+  | `RequestHandlerNotDefined`        | `isRivetErrorCode(e, "handler", "request_not_defined")` |
+  | `WebSocketHandlerNotDefined`      | `isRivetErrorCode(e, "handler", "websocket_not_defined")` |
+  | `FeatureNotImplemented`           | `isRivetErrorCode(e, "feature", "not_implemented")` |
+  | `Unsupported`                     | `isRivetErrorCode(e, "feature", "unsupported")`   |
+
+  Keep catching `UserError` when you intentionally throw user-facing application errors yourself. The removal only affects the built-in typed subclasses that used to wrap framework/runtime failures.
+
+- Restored `Registry.handler(request)` and `Registry.serve()` for the native serverless runner endpoint described in `.agent/specs/serverless-restoration.md`. The route surface is `/api/rivet`, `/api/rivet/health`, `/api/rivet/metadata`, and `/api/rivet/start`; user traffic still goes through the Rivet Engine gateway.
+- `Registry.start()` now starts the native envoy path only. Built-in `staticDir` serving is not wired through the native engine subprocess yet and remains a follow-up.
+- Restored the supported `rivetkit/test`, `rivetkit/inspector`, and `rivetkit/inspector/client` entrypoints. `rivetkit/test` now waits for the native envoy metadata endpoint instead of the removed TypeScript in-memory runtime.
+- Restored the zero-runtime `*ContextOf` helper types on the root `rivetkit` export so patterns like `ActionContextOf<typeof myActor>` work again. `PATH_CONNECT`, `PATH_WEBSOCKET_PREFIX`, `KV_KEYS`, `ActorKv`, `ActorInstance`, `ActorRouter`, `createActorRouter`, and `routeWebSocket` stay removed.
+- `rivetkit/driver-helpers` and `rivetkit/driver-helpers/websocket` stay removed. They only exposed internal runtime/router helpers; migrate to the public `rivetkit`, `rivetkit/client`, and engine-client APIs instead of importing package internals.
+- `rivetkit/topologies/*` stays removed. The topology helpers are deleted on this branch; keep custom coordinate/partition logic in app code if you still need it.
+- `rivetkit/dynamic` and `rivetkit/sandbox/*` stay permanently removed on this branch. There is no in-package replacement, so move those integrations out of `rivetkit` imports instead of waiting for a hidden subpath to come back.

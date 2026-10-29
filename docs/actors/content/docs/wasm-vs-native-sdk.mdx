@@ -1,0 +1,49 @@
+---
+title: "WASM vs Native SDK"
+description: "Compare the native and WebAssembly RivetKit runtimes and when to use each."
+skill: true
+---
+
+RivetKit ships two runtimes for executing actor logic. Most projects use the
+native runtime automatically. Runtimes that cannot load native binaries use
+the WebAssembly runtime.
+
+- **Native**: Default. Runs on Node.js and Bun via native bindings. Best performance.
+- **WebAssembly (wasm)**: Runs anywhere a `WebAssembly.Module` can be instantiated.
+
+## Native runtime
+
+The native runtime is the default and requires no configuration. It loads
+platform-specific native bindings for the best performance and full feature
+support on Node.js and Bun.
+
+<CodeSnippet file="examples/docs/general-wasm-vs-native-sdk/native-runtime.ts" />
+
+## WebAssembly runtime
+
+Some runtimes cannot load native binaries, so RivetKit provides a WebAssembly
+build of its core runtime in the `@rivetkit/rivetkit-wasm` package. Select it
+with `runtime: "wasm"` and pass the wasm bindings and binary through the `wasm`
+option. `initInput` accepts a `Uint8Array`, `URL`, `Response`, or a
+`WebAssembly.Module`.
+
+```typescript @nocheck
+import { actor, setup } from "rivetkit";
+import * as wasmBindings from "@rivetkit/rivetkit-wasm";
+import wasmModule from "@rivetkit/rivetkit-wasm/rivetkit_wasm_bg.wasm";
+
+const counter = actor({ state: { count: 0 }, actions: {} });
+
+const registry = setup({
+  runtime: "wasm",
+  wasm: { bindings: wasmBindings, initInput: wasmModule },
+  use: { counter },
+});
+```
+
+The process still runs as a long-lived node that keeps an outbound WebSocket to
+the control plane, so the runtime must provide `new WebSocket(url)`.
+
+## Related
+
+- [Architecture](/docs/architecture)

@@ -1,7 +1,0 @@
-[service]
-name = "upload-worker"
-
-[runtime]
-kind = "rust"
-
-[consumer]

@@ -1,7 +1,0 @@
-[service]
-name = "build-create"
-
-[runtime]
-kind = "rust"
-
-[operation]

@@ -1,7 +1,0 @@
-[service]
-name = "team-resolve-display-name"
-
-[runtime]
-kind = "rust"
-
-[operation]

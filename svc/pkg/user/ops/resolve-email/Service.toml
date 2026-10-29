@@ -1,7 +1,0 @@
-[service]
-name = "user-resolve-email"
-
-[runtime]
-kind = "rust"
-
-[operation]

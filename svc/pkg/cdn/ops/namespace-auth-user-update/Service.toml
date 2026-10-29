@@ -1,7 +1,0 @@
-[service]
-name = "cdn-namespace-auth-user-update"
-
-[runtime]
-kind = "rust"
-
-[operation]

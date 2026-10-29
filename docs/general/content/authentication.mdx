@@ -1,0 +1,15 @@
+---
+title: "Authentication"
+description: "The credentials the control plane accepts and where each one belongs."
+skill: true
+---
+
+The control plane checks credentials before serving management requests or routing Actor traffic. Application-level authorization still belongs in your Actor. See [Permissions](/actors/docs/permissions).
+
+## Credentials
+
+Your Rivet token is the `auth.admin_token` value in the control plane config. Your nodes and backend use it to connect, create namespaces, and manage node pools. Keep it server-side.
+
+For browser clients, issue [scoped JWTs](/docs/jwt). A JWT grants access to one namespace and an explicit set of resources and operations, so give each client only the permissions it needs.
+
+Pass credentials in `Authorization: Bearer <token>`, or use an [endpoint URL](/docs/connect) such as `https://production:<token>@rivet.mycompany.com`.

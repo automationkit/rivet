@@ -1,0 +1,63 @@
+---
+title: "Destroying Actors"
+description: "Permanently destroy Rivet Actors and their stored state, use lifecycle cleanup hooks, and choose safe deletion patterns."
+skill: true
+---
+
+- User account deletion
+- Ending a user session
+- Closing a room or game
+- Cleaning up temporary resources
+- GDPR/compliance data removal
+
+Actors sleep when idle, so destruction is only needed to permanently remove data; not to save compute.
+
+## Destroying An Actor
+
+### Destroy via Action
+
+To destroy an actor, use `c.destroy()` like this:
+
+<CodeSnippet file="examples/docs/actors-destroy/destroy-via-action.ts" />
+
+### Destroy via HTTP
+
+Send a DELETE request to your control plane to destroy an actor. Authenticate with your Rivet token.
+
+<CodeGroup>
+
+```typescript
+const actorId = "your-actor-id";
+const namespace = "default";
+const token = "your-token";
+
+await fetch(`https://rivet.example.com/actors/${actorId}?namespace=${namespace}`, {
+  method: "DELETE",
+  headers: {
+    Authorization: `Bearer ${token}`,
+  },
+});
+```
+
+```bash
+curl -X DELETE "https://rivet.example.com/actors/{actorId}?namespace={namespace}" \
+  -H "Authorization: Bearer {token}"
+```
+</CodeGroup>
+
+To find the actor ID, list the actors with that name first:
+
+```bash
+curl "https://rivet.example.com/actors?namespace={namespace}&name={actor-name}" \
+  -H "Authorization: Bearer {token}"
+```
+
+## Lifecycle Hook
+
+Once destroyed, the `onDestroy` hook will be called. This can be used to clean up resources related to the actor. For example:
+
+<CodeSnippet file="examples/docs/actors-destroy/on-destroy.ts" />
+
+## Accessing Actor After Destroy
+
+Once an actor is destroyed, any subsequent requests to it will fail with an `actor.not_found` error (`{ group: "actor", code: "not_found" }`). The actor's state is permanently deleted.

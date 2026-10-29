@@ -1,0 +1,59 @@
+---
+title: "Endpoints"
+description: "Tell your nodes and clients where the Rivet control plane is, with the namespace and token in one URL."
+skill: true
+---
+
+## Local development
+
+No configuration is needed. RivetKit runs a local control plane on your machine.
+
+## Production
+
+### Private endpoint
+
+The private endpoint tells your nodes and backend where the control plane is. It carries a secret token, so keep it server-side.
+
+<Tabs>
+
+<Tab title="Environment Variable">
+
+```bash
+RIVET_ENDPOINT=https://my-namespace:<rivet-token>@rivet.example.com
+```
+
+</Tab>
+
+<Tab title="Config">
+
+<CodeSnippet file="examples/docs/general-endpoints/private-endpoint.ts" />
+
+</Tab>
+
+</Tabs>
+
+## URL auth syntax
+
+Endpoint URLs carry the namespace and token:
+
+```
+https://namespace:token@host/path
+```
+
+This is the recommended form. Alternatively, set them separately:
+
+```bash
+RIVET_ENDPOINT=https://rivet.example.com
+RIVET_NAMESPACE=my-namespace
+RIVET_TOKEN=<rivet-token>
+```
+
+On a self-hosted control plane, use your [namespace slug](/docs/namespaces) and your Rivet token, the `auth.admin_token` value from the control plane config. For the `default` namespace: `https://default:<rivet-token>@rivet.example.com`.
+
+## Reference
+
+| Environment Variable | Config Option | Description |
+|---------------------|---------------|-------------|
+| `RIVET_ENDPOINT` | `endpoint` | Control plane URL for your nodes and backend |
+| `RIVET_NAMESPACE` | `namespace` | Namespace for Rivet Actor isolation |
+| `RIVET_TOKEN` | `token` | Token for the control plane connection |

@@ -1,7 +1,0 @@
-[service]
-name = "kv-config-version-publish"
-
-[runtime]
-kind = "rust"
-
-[operation]

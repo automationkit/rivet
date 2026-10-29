@@ -1,0 +1,25 @@
+---
+title: "HTTP Server"
+description: "Start a Rivet node and expose health and metrics routes from your application's HTTP server."
+skill: true
+---
+
+## Start a node
+
+Call `registry.start()` to connect your app to the control plane and run Actors:
+
+<CodeSnippet file="examples/docs/general-http-server/index.ts" title="index.ts" />
+
+Run the file with `npx tsx --watch index.ts` for Node.js, or `bun --watch index.ts` for Bun. In local development, RivetKit starts a control plane at `http://localhost:6420`. Actor clients connect to that control plane.
+
+In production, set [RIVET_ENDPOINT](/docs/connect) and run the process continuously. See [Deploy Nodes](/docs/deploy/self-host/nodes/).
+
+## Add health and metrics routes
+
+Your app can run an HTTP server alongside its Rivet node. Mount `registry.routes.health()` and `registry.routes.prometheusMetrics()` in your router for probes and scraping:
+
+<CodeSnippet file="examples/docs/general-http-server/node-hono.ts" title="server.ts" />
+
+The app's HTTP listener serves these routes. Actor requests continue to reach the node through its outbound connection to the control plane.
+
+For Actor-specific HTTP handlers, see [Low-Level HTTP Handler](/actors/docs/request-handler).

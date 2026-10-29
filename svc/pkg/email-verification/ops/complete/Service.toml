@@ -1,7 +1,0 @@
-[service]
-name = "email-verification-complete"
-
-[runtime]
-kind = "rust"
-
-[operation]
